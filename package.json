@@ -14,7 +14,8 @@
     "scripts": {
         "start": "yarn run build && node ./dist/run.js",
         "build": "webpack",
-        "dev": "cross-env WEBPACK_BUILD_ENV=dev webpack"
+        "dev": "cross-env WEBPACK_BUILD_ENV=dev webpack",
+        "test": "jest __tests__/"
     },
     "bugs": {
         "url": "https://github.com/cmux/boilerplate-server/issues"
@@ -34,6 +35,7 @@
         "forever": "^1.0.0",
         "forever-monitor": "^1.7.1",
         "husky": "^3.0.5",
+        "jest": "^24.9.0",
         "lint-staged": "^9.2.5",
         "prettier": "^1.18.2",
         "prettier-eslint": "^9.0.0",
