@@ -68,21 +68,32 @@ module.exports = () => {
         let child;
         config.plugins.push({
             apply: compiler => {
-                compiler.hooks.afterEmit.tap('AfterEmitPlugin', compilation => {
-                    if (!child) {
+                compiler.hooks.watchRun.tap('ApiServerPlugin', compilation => {
+                    if (child) {
+                        child.stop();
+                    } else {
                         child = new forever.Monitor(
                             path.resolve(__dirname, 'dist/run.js'),
                             {
                                 max: 1,
-                                silent: false
+                                silent: false,
+                                uid: 'dreamari-dev-api-server',
+                                killTree: true
                             }
                         );
-                        child.start();
-                    } else {
-                        // child.stop();
-                        child.start();
                     }
                 });
+                compiler.hooks.afterEmit.tap('ApiServerPlugin', compilation => {
+                    child.start();
+                });
+                compiler.hooks.watchClose.tap(
+                    'ApiServerPlugin',
+                    compilation => {
+                        if (child) {
+                            child.stop();
+                        }
+                    }
+                );
             }
         });
     }
