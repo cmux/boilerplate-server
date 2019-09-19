@@ -1,10 +1,13 @@
 const path = require('path');
+const fs = require('fs');
 const forever = require('forever-monitor');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = () => {
     /** 当前是否是开发环境 */
     const isEnvDevelopment = process.env.WEBPACK_BUILD_ENV === 'dev';
+    /** 打包结果路径 */
+    const dist = path.resolve(__dirname, 'dist');
 
     const config = {
         mode: 'development',
@@ -13,7 +16,7 @@ module.exports = () => {
         watch: isEnvDevelopment ? true : false,
         output: {
             filename: '[name].js',
-            path: path.resolve(__dirname, 'dist')
+            path: dist
         },
         plugins: [],
         entry: {
@@ -64,8 +67,19 @@ module.exports = () => {
 
     if (!isEnvDevelopment) {
         config.plugins.push(new CleanWebpackPlugin());
+        if (fs.existsSync(dist)) fs.rmdirSync(dist);
     } else {
         let child;
+
+        const exitHandler = async (...args) => {
+            child.stop();
+        };
+        process.on('exit', exitHandler);
+        process.on('SIGINT', exitHandler);
+        process.on('SIGUSR1', exitHandler);
+        process.on('SIGUSR2', exitHandler);
+        process.on('uncaughtException', exitHandler);
+
         config.plugins.push({
             apply: compiler => {
                 compiler.hooks.watchRun.tap('ApiServerPlugin', compilation => {
@@ -73,11 +87,10 @@ module.exports = () => {
                         child.stop();
                     } else {
                         child = new forever.Monitor(
-                            path.resolve(__dirname, 'dist/run.js'),
+                            path.resolve(dist, 'run.js'),
                             {
                                 max: 1,
                                 silent: false,
-                                uid: 'dreamari-dev-api-server',
                                 killTree: true
                             }
                         );
@@ -86,14 +99,6 @@ module.exports = () => {
                 compiler.hooks.afterEmit.tap('ApiServerPlugin', compilation => {
                     child.start();
                 });
-                compiler.hooks.watchClose.tap(
-                    'ApiServerPlugin',
-                    compilation => {
-                        if (child) {
-                            child.stop();
-                        }
-                    }
-                );
             }
         });
     }
