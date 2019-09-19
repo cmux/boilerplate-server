@@ -1,5 +1,4 @@
 const path = require('path');
-const fs = require('fs');
 const forever = require('forever-monitor');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
@@ -67,7 +66,6 @@ module.exports = () => {
 
     if (!isEnvDevelopment) {
         config.plugins.push(new CleanWebpackPlugin());
-        if (fs.existsSync(dist)) fs.rmdirSync(dist);
     } else {
         let child;
 
